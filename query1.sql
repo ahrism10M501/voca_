@@ -1,0 +1,14 @@
+-- SQLite
+CREATE TABLE words (
+    word_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    word TEXT UNIQUE NOT NULL,
+    level INTEGER NOT NULL,
+    day INTEGER
+);
+
+CREATE TABLE meanings(
+    meaning_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    word_id INTEGER NOT NULL,
+    meaning TEXT NOT NULL,
+    FOREIGN KEY (word_id) REFERENCES words(word_id) ON DELETE CASCADE
+);

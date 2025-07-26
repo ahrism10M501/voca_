@@ -1,0 +1,107 @@
+resume: 이력서
+
+opening:공석, 결원; 개장, 개시
+
+applicant:지원자, 신청자
+
+requirement:필요조건, 요건
+
+meet:(필요, 요구 등을) 만족시키다
+
+qualified:자격 있는, 적격의
+
+be qualified for: ~에 자격이 있다
+
+qualification for: ~에 대한 자격
+
+candidata: 후보자, 지원자
+
+confidence: 확신, 자신; 신임
+
+certified: 보증된, 증명된
+
+confident: 확신하는, 자신만만한
+
+in confidence: 비밀로
+
+confidence: ~에 대한 확신
+
+highly: 매우, 대단히
+
+professional: 전문적인, 직업의; 전문가
+
+interview: 면접; 면접을 보다
+
+hire: 고용하다
+
+training: 교육, 훈련
+
+reference: 추천서; 참고
+
+position: 일자리, 직책; 두다
+
+achievement: 성취, 달성
+
+impressed: 인상 싶게 생각하는, 감명을 받은
+
+excellent: 훌륭한, 탁월한
+
+eligible: 자격이 있는, 적격의
+
+ineligible: 자격이 없는
+
+allowed: 허용된, 허가받은
+
+identify: 알아보다, 확인하다
+
+associate: 관련시키다
+
+condition: 조건
+
+be associated with: ~와 관련되다
+
+in associated with: ~와 제휴하여
+
+employment: 고용
+
+lack: ~이 없다; 부족
+
+managerial: 관리의
+
+supervisory: 관리의, 감독하는
+
+dilligent: 성실한
+
+familiar: 익숙한, 친숙한
+
+proficiency: 숙달, 능숙
+
+prospective: 장래의, 미래의
+
+appeal: 관심을 끌다, 매력적이다
+
+appeal to: ~의 흥미를 끌다, ~에게 호소하다
+
+specialize: ~을 전공하다, 전문적으로 다루다
+
+apprehensive: 걱정하는, 염려하는
+
+consultant: 고문, 컨설턴트
+
+entitle: 자격을 주다
+
+degree: 학위
+
+payroll: 임금 대장, 급료 명부
+
+recruit: 모집하다
+
+certification: 증명서, 증명
+
+occupation: 직업
+
+wage: 시급, 월급, 급료
+
+salary: 연봉, 봉급
+
+compensation: 보상, 보수
