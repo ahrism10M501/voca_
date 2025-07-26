@@ -4,11 +4,32 @@ import re
 con = sqlite3.connect("./VOCA.db")
 cur = con.cursor()
 
-level = {'main':0, 'basic':0, 'c800':0, 'c900':0}
+level = {'beginner':0, 'elementary':1, 'intermediate':2, 'advanced':3, 'native':4, '':5}
+
+
+
+
+
+
+
+
+
 
 day = 1
-voca_level = level['main']
+voca_level = level['intermediate']
 voca_file_path = "voca.txt"
+
+
+
+
+
+
+
+
+
+
+
+
 
 voca = []
 with open('voca.txt', 'r', encoding='utf-8') as f:

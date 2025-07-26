@@ -1,107 +1,57 @@
-resume: 이력서
+application from:신청서
 
-opening:공석, 결원; 개장, 개시
+career: 직업, 경력
 
-applicant:지원자, 신청자
+completion: 완료, 완성
 
-requirement:필요조건, 요건
+fair: 공정한, 타당한
 
-meet:(필요, 요구 등을) 만족시키다
+graduation: 졸업
 
-qualified:자격 있는, 적격의
+in fact: 사실은
 
-be qualified for: ~에 자격이 있다
+job fair: 취업 박람회
 
-qualification for: ~에 대한 자격
+job offer: 일자리 제안
 
-candidata: 후보자, 지원자
+list: 목록, 명단; 목록에 기입하다
 
-confidence: 확신, 자신; 신임
+newcomer: 새로 온 사람, 신입 사원
 
-certified: 보증된, 증명된
+part-time: 파트타임의, 시간제의, 아르바이트
 
-confident: 확신하는, 자신만만한
+previous job: 이전 직업
 
-in confidence: 비밀로
+secretary: 비서
 
-confidence: ~에 대한 확신
+send in: ~을 제출하다
 
-highly: 매우, 대단히
+tidy: 단정한, 깔끔한
 
-professional: 전문적인, 직업의; 전문가
+trainee: 훈련받는 사람
 
-interview: 면접; 면접을 보다
+apply for: ~에 지원하다
 
-hire: 고용하다
+aptitude: 재능, 소질
 
-training: 교육, 훈련
+be admitted to:: ~에 입장이 허용되다
 
-reference: 추천서; 참고
+be advised to do: ~할 것을 권유받다
 
-position: 일자리, 직책; 두다
+criteria: 기준들
 
-achievement: 성취, 달성
+criterion: 기준
 
-impressed: 인상 싶게 생각하는, 감명을 받은
+decade: 10년
 
-excellent: 훌륭한, 탁월한
+employ: 고용하다
 
-eligible: 자격이 있는, 적격의
+insufficient: 불충분한
 
-ineligible: 자격이 없는
+minimum: 최소한도; 최소한의
 
-allowed: 허용된, 허가받은
+party: 단체, 당사자, 연회
 
-identify: 알아보다, 확인하다
+plentiful: 풍부한
 
-associate: 관련시키다
-
-condition: 조건
-
-be associated with: ~와 관련되다
-
-in associated with: ~와 제휴하여
-
-employment: 고용
-
-lack: ~이 없다; 부족
-
-managerial: 관리의
-
-supervisory: 관리의, 감독하는
-
-dilligent: 성실한
-
-familiar: 익숙한, 친숙한
-
-proficiency: 숙달, 능숙
-
-prospective: 장래의, 미래의
-
-appeal: 관심을 끌다, 매력적이다
-
-appeal to: ~의 흥미를 끌다, ~에게 호소하다
-
-specialize: ~을 전공하다, 전문적으로 다루다
-
-apprehensive: 걱정하는, 염려하는
-
-consultant: 고문, 컨설턴트
-
-entitle: 자격을 주다
-
-degree: 학위
-
-payroll: 임금 대장, 급료 명부
-
-recruit: 모집하다
-
-certification: 증명서, 증명
-
-occupation: 직업
-
-wage: 시급, 월급, 급료
-
-salary: 연봉, 봉급
-
-compensation: 보상, 보수
+profession: 직업
