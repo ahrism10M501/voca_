@@ -1,137 +1,71 @@
-attire: 복장, 옷차림새
-
-code: 규범, 관례; 암호
-
-concern: 우려, 걱정; 문제, 일
-
-policy: 규정; 보험 증권
-
-comply:준수하다, 따르다
-
-observe: 준수하다, ~을 관찰하다
-
-obey: (지시에)따르다, (사람에게)복종하다
-
-fulfill: (조건을)충족시키다
-
-regulation: 규정
-
-safety regulations: 안전 규정
-
-customs requlations: 관세 규정
-
-exception: 예외
-
-adhere: 지키다, 고수하다
-
-severely: 엄격하게, 심하게
-
-refrain: 자제하다, 삼가다
-
-permission: 허락, 허가
-
-sternly: 엄격하게
-
-leniently: 관대하게
-
-permit: 허락, 허가
-
-access: 이용 권한, 접근; 통로; ~에 접근하다, ~에 도달하다
-
-approach: (학문 등에의)접근법, 처리 방법, 다가오다, 가까워지다
-
-thoroughly: 철저하게; 완전히, 대단히
-
-revise:(의견이나 계획을)수정하다, (의견이나 계획을)변경하다
-
-approval: 승인, 인가
-
-form: 종류, 유형, 양식
-
-immediately:즉시, 곧
-
-inspection:점검, 검사
-
-inspect:점검하다
-
-arrangement:준비, 마련, 주선
-
-arrange:마련하다, 주선하다
-
-procedure:절차
-
-negative:부정적인, 비관적인
-
-mandate: 명령하다, 지시하다; 권한, 지시, 명령
-
-proceed:나아가다, 진행하다
-
-procedural: 절차상의
-
-effect:효력, 효과, 영향; 결과로서 ~을 가져오다
-
-in effect: (법률 등이)효력 있는, (법률 등이)실시된
-
-come into effect:실시되다, 발효되다
-
-take effect:~에 영향을 미치다
-
-secondary effect:부수적 효과
-
-drastically:심하게, 과감하게, 철저하게
-
-according to:~에 따라
-
-enable:(무엇을)가능하게 하다
-
-standard:기준, 표준
-
-standardize: 표준화하다
-
-constant:지속적인, 끊임없이 계속하는
-
-act: 법령, 결의서; 행위, 행동; 결정하다, 판결을 내리다; 행동하다
-
-compensation:보상금, 보상
-
-ban:금지, 금지하다
-
-obligation:의무, 책임
-
-authorize: ~을 인가하다, 권한을 부여하다
-
-prohihbit: 금지하다
-
-forbid: 금지하다
-
-abolish:(제도나 법률 등을)폐지하다
-
-enforce:(법률을)시행하다, 집행하다
-
-abolition:폐지
-
-enforcement:시행, 집행
-
-habit:습관, 버릇
-
-convention:관례, 관습
-
-legislation:법률, 법규
-
-restrict:한정하다, 제한하다
-
-lift a restriction:제한을 풀다
-
-raise a restriction:제한을 풀다
-
-limit:한정하다, 제한하다
-
-restrictive:제한하는
-
-legislate:법률을 제정하다
-
-habitual:습관적인
-
-restriction:제한
-
-
+accustomed: 익숙한
+corporation: 주식회사, 법인
+demanding: 요구가 많은, 힘든
+colleague: (직업상의)동료
+division:부서
+
+divide:나누다
+compartment:구획, 칸막이
+category: 부문
+request:요청; 요청하다
+efficiently: 효율적으로
+
+manage:~을 경영하다; 가까스로 하다
+handle:처리하다, 다루다
+succeed:성공하다
+submit:제출하다
+directly:곧바로
+
+remind:~에게 상기시키다, 일꺠우다
+reminder:메모, 상기시켜주는 것
+instruct:지시하다, 가르치다
+instruction:지시
+deadline:마감일, 마감시간
+
+sample:견본, 샘플, 표본; 시식하다, 시험하다
+notify:~에게 통지하다, 알리다
+announce:~을 발표하다
+reveal:~을 누설하다, ~을 폭로하다
+perform:행하다, 실행하다
+
+monitor:감독하다, 감시하다, 검토하다; 화면, 모니터
+deserve:~할 만하다, ~할 가치가 있다
+conduct:하다, 행동하다, 실행하다
+complete:완수하다, 완료하다
+assignment:일,임무,과제
+
+entire:전체의
+release:발표하다, 공개하다; 출시, 발매
+press release:보도 자료
+extension: 연장, 연기; (전화의)내선
+extend:늘리다, 연장하다
+
+extensive: 광범위한, 포괄적인
+electronically:통신망으로, 컴퓨터로
+attendance:출근, 출석
+absolutely:절대적으로, 완전히
+delegate:(권한 등을)위임하다; 대표
+
+delegation:대표단,(권한의)위임
+attendantively:주의 깊게, 조심스럽게
+supervision:감독
+supervisor:감독관
+workshop:연수, 워크숍
+
+draw:끌다, 끌어당기다
+revision:수정, 개정
+reluctantly:마지못해, 꺼려하여
+acquaint:~에게 숙지시키다, 잘 알게 하다
+acquaintance:지인
+
+convey:(용건을)전달하다
+check:검사하다, 조사하다; 확인하다
+inspect: 검사하다
+examine:검사하다
+headquarters:본부
+
+file:(서류를)정리하다, (서류를)철하다; (서류나 신청 혹은 고소 등을)정식으로 제기하다, (서류나 신청 혹은 고소 등을)제출하다; 고소하다; 파일, 서류
+oversee:감독하다
+involved:관여하는, 관계된, 연루된
+concentrate: 집중하다, 집중시키다
+concentration: 집중

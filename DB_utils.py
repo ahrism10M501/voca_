@@ -1,6 +1,7 @@
 import re
 import logging
 import sqlite3
+from typing import Optional
 
 __all__ = ['levelToIndex', 'indexToLevel', 'txtToList', 'DBConnect', 'DataGetter']
 
@@ -36,22 +37,26 @@ def txtToList(path) -> list:
     return voca
 
 class DBConnect():
-    def __init__(self, path, auto_commit=True):
+    def __init__(self, path, auto_commit=False):
         
         self.path = path
+        # HACK : 하드코딩 된 부분 고쳐야 합니다.
+        self.tables = ('words', 'meanings')
+
         self.con = sqlite3.connect(path)
         logging.info(f"DB {path} is connected")
         self.cur = self.con.cursor()
-        self.cur.execute("PRAGMA table_info(words);")
-        # HACK : 하드코딩 된 부분 고쳐야 합니다.
-        self.tables = {'words', 'meanings'}
+        
+        self.cur.execute(f"PRAGMA table_info({self.tables[0]})")
+        self.words_columns = [row[1] for row in self.cur.fetchall()]
+
+        self.cur.execute(f"PRAGMA table_info({self.tables[1]})")
+        self.meanings_columns = [row[1] for row in self.cur.fetchall()]
 
         self.auto_commit = auto_commit
-        self.words_columns = [row[1] for row in self.cur.fetchall()]
-        
+
     def __del__(self):
         self.con.close()
-        logging.info("DB is closed")
 
     def addVocaToDB(self, vocas:list, level:int, day:int) -> int:
         """
@@ -73,19 +78,25 @@ class DBConnect():
         logging.info(f"the {len(vocas)} words are added on Database")
         return True
 
-    def updateDataByWord(self, word, target, data) -> int:
+    def updateDataByWord(self, word, target, data, num:Optional[int] = None) -> bool:
         """
         단어를 토대로 words 테이블의 정보를 수정합니다.
+        뜻이 여러 개일 경우, num으로 수정 대상을 선택하세요.
         """
-        if target not in self.words_columns:
+        if target in self.meanings_columns:
+            return self._updateMeaningsByWord(word, target, data, num)
+        elif target in self.words_columns:
+            return self._updateWordsByWord(word, target, data)
+        else:
             raise ValueError("Invalid Column name")
-        
-        
 
+    def _updateWordsByWord(self, word, target, data):
         query = f"SELECT word_id, {target} FROM words WHERE word = ?"
         self.cur.execute(query, (word,))
         diff = self.cur.fetchone()
-
+        if not diff:
+            raise ValueError("Word not found")
+        
         query = f"UPDATE words SET {target} = ? WHERE word = ?"
         self.cur.execute(query, (data, word))
 
@@ -96,12 +107,45 @@ class DBConnect():
 
         return True
 
+    def _updateMeaningsByWord(self, word, target, data, num:Optional[int] = None):
+        self.cur.execute("SELECT word_id FROM words WHERE word = ?", (word,))
+        word_id = self.cur.fetchone()
+        if not word_id:
+            raise ValueError("Word not found")
+        word_id = word_id[0]
+
+        self.cur.execute("SELECT meaning_id, meaning FROM meanings WHERE word_id = ?", (word_id,))
+        means = self.cur.fetchall()
+        if not means:
+            raise ValueError("Meanings not found")
+
+        if len(means) > 1:
+            if num is None or not (0 <= num < len(means)):
+                raise ValueError(f"Invalid Num. Must be 0 ~ {len(means)-1}")
+            mean_id = means[num][0]
+            old_mean = means[num][1]
+        else:
+            mean_id = means[0][0]
+            old_mean = means[0][1]
+
+        query = f"UPDATE meanings SET {target} = ? WHERE meaning_id = {mean_id}"
+        self.cur.execute(query, (data,))
+
+        if self.auto_commit:
+            self.con.commit()
+
+        logging.info(f"{word}'s {target} updated from {old_mean} to {data}: meaning_id={mean_id}")
+
+        return True
+
     def commit(self):
         self.con.commit()
+        logging.info("DB commited")
         return True
     
     def close(self):
         self.con.close()
+        logging.info("DB closed")
         return True
     
     def reconnect(self, retry=5):
@@ -121,12 +165,25 @@ class DBConnect():
                 return True
         return False
 
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            logging.error(f"Exception: {exc_type}, {exc_val}")
+            return False
+        
+        self.commit() if self.auto_commit else None
+        self.close()
+        return True
+
 class DataGetter():
     def __init__(self, db: DBConnect, table:str, targets:str):
         self.con = db.con
         self.cur = db.cur
         self.words_columns = db.words_columns
-        
+        self.commit = db.commit if db.auto_commit else None
+
         if ";" in table or ";" in targets:
             logging.warning("SQL Injection Detected!")
             raise ValueError("Semicolons are not allowed in table or targets.")
@@ -140,9 +197,7 @@ class DataGetter():
 
         self.table = table
         self.targets = targets
-        self.basic_query = f"SELECT {targets} FROM {table}"
 
-        # 기본 PK 컬럼 지정 (words: word_id, meanings: meaning_id 등)
         self.pk_col = "word_id" if table == "words" else "meaning_id"
 
     def findMeanByWord(self, word:str) -> list[str]:
@@ -168,17 +223,25 @@ class DataGetter():
             stop = 1<<30 if idx.stop is None else idx.stop
             step = 1 if idx.step is None else idx.step
 
-            query = self.basic_query + f" WHERE {self.pk_col} >= ? AND {self.pk_col} < ?"
-            self.cur.execute(query, (start, stop))
-            datas = self.cur.fetchall()[::step]
-            return datas
+            query = f"SELECT {self.targets} FROM {self.table} LIMIT ? OFFSET ? ORDER BY {self.pk_col}"
+            self.cur.execute(query, (stop-start, start))
+            return self.cur.fetchall()[::step]
 
-        query = self.basic_query + f" WHERE {self.pk_col} = ?"
+        query = f"SELECT {self.targets} FROM {self.table} LIMIT 1 OFFSET ? ORDER BY {self.pk_col}"
         self.cur.execute(query, (idx,))
         return self.cur.fetchone()
+    
+    def __iter__(self):
+        query = f"SELECT {self.targets} FROM {self.table} ORDER BY {self.pk_col}"
+        self.cur.execute(query)
+        while True:
+            rows = self.cur.fetchmany(128)
+            if not rows:
+                break
+            for row in rows:
+                yield row
 
 if __name__ == "__main__":
-    
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
