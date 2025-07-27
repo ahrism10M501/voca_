@@ -178,7 +178,8 @@ class DBConnect():
         return True
 
 class DataGetter():
-    def __init__(self, db: DBConnect, table:str, targets:str):
+    def __init__(self, db: DBConnect, table:str, targets:str, batch_size=128):
+        self.batch_size = batch_size
         self.con = db.con
         self.cur = db.cur
         self.words_columns = db.words_columns
@@ -235,7 +236,7 @@ class DataGetter():
         query = f"SELECT {self.targets} FROM {self.table} ORDER BY {self.pk_col}"
         self.cur.execute(query)
         while True:
-            rows = self.cur.fetchmany(128)
+            rows = self.cur.fetchmany(self.batch_size)
             if not rows:
                 break
             for row in rows:
