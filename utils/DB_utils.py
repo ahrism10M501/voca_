@@ -3,15 +3,25 @@ import logging
 import sqlite3
 from typing import Optional
 
-__all__ = ['levelToIndex', 'indexToLevel', 'txtToList', 'DBConnect', 'DataGetter']
+from utils.FileProcessor import FileProcessor
+
+"""
+SQL형식의 DB에 업로드하거나, 업데이트 하거나, 불러오기 위한 클래스
+
+지금은 너무 패턴이 어렵다!!!
+DBConnect 클래스의 책임이 너무 크다. CRUD를 분리해서 관리하고, DBConnect는 with문을 통해 이들을 통제하는 팩토리가 되면 좋겠다.
+"""
+
+
+__all__ = ['levelToIndex', 'indexToLevel', 'DBConnect', 'DataGetter']
 
 levelToIndex = {'beginner':0,
-                    'elementary':1,
-                    'intermediate':2,
-                    'advanced':3,
-                    'native':4,
-                    '<UNK>':5
-                    }
+                'elementary':1,
+                'intermediate':2,
+                'advanced':3,
+                'native':4,
+                '<UNK>':5
+                }
 
 indexToLevel = {0:'beginner',
                 1:'elementary',
@@ -20,21 +30,6 @@ indexToLevel = {0:'beginner',
                 4:'native',
                 5:'<UNK>'
                 }
-
-def txtToList(path) -> list:
-    voca = []
-    with open(path, 'r', encoding='utf-8') as f:
-        for line in f:
-            if not line.strip():
-                continue
-            word, meaning = line.strip().split(':', 1)
-            word = word.strip()
-            meanings = re.split(r'[;,]', meaning.strip())
-            for mean in meanings:
-                mean = mean.strip()
-                if mean:
-                    voca.append((word, mean))
-    return voca
 
 class DBConnect():
     def __init__(self, path, auto_commit=False):
@@ -58,15 +53,13 @@ class DBConnect():
     def __del__(self):
         self.con.close()
 
-    def addVocaToDB(self, vocas:list, level:int, day:int) -> int:
+    def dump(self, vocas:list|tuple, level:int, day:int) -> bool:
         """
         list(tuple(str, str))로 받은 단어 정보를 저장합니다.
         level과 day는 별개로 지정해주세요.
-        만약 해당 형식의 단어집이 있다면, txtToList를 이용해 단어 list를 받아오세요.
         """
-        for voca in vocas:
-            word, mean = voca
-            
+        vocas = FileProcessor._PreProcess(vocas)
+        for word, mean in vocas:
             self.cur.execute("INSERT OR IGNORE INTO words (word, level, day) VALUES (?, ?, ?)", (word, level, day))
             self.cur.execute("SELECT word_id FROM words WHERE word = ?", (word,))
             word_id = self.cur.fetchone()[0]
@@ -77,6 +70,18 @@ class DBConnect():
 
         logging.info(f"the {len(vocas)} words are added on Database")
         return True
+
+    def load(self, target):
+        """
+        target은 반드시 앞에 테이블명.타겟명
+        """
+        if ';' in target:
+            logging.warning("SQL Injection Detected!")
+            raise ValueError("Semicolons are not allowed in table or targets.")
+        
+        query = f"SELECT {target} FROM words left join meanings on words.word_id = meanings.word_id ORDER BY words.word_id"
+        self.cur.execute(query)
+        return self.cur.fetchall()
 
     def updateDataByWord(self, word, target, data, num:Optional[int] = None) -> bool:
         """
@@ -249,20 +254,3 @@ if __name__ == "__main__":
         datefmt="%Y.%m.%d %H:%M:%S",
         filename="voca.log"
     )
-
-    """
-    'beginner':0,
-    'elementary':1,
-    'intermediate':2,
-    'advanced':3,
-    'native':4,
-    '<UNK>':5
-    """
-    day = 2
-    voca_level = levelToIndex['intermediate']
-    voca_file_path = "voca.txt"
-
-    print(txtToList(voca_file_path))
-    db = DBConnect('./VOCA.db')
-    data = DataGetter(db, 'words', 'word, level')
-    print(data[3:10])

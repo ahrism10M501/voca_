@@ -1,71 +1,48 @@
-accustomed: 익숙한
-corporation: 주식회사, 법인
-demanding: 요구가 많은, 힘든
-colleague: (직업상의)동료
-division:부서
+lax:느슨한, 규율에 못 미치는
+procrastinate:미루다, 꾸물거리다
+combined:결합된,합동의
+accomplish:성취하다
+joint:합동의, 공동의
+combination: 결합
+achieve:성취하다
+voluntarily:자발적으로
 
-divide:나누다
-compartment:구획, 칸막이
-category: 부문
-request:요청; 요청하다
-efficiently: 효율적으로
+undertake:(일을)떠맡다
+assume:증거는 없으나 사실이라고 생각하다.(책임이나 역할을)맡다
+presume:가정하다
+assumption:가정
+occasionally:가끔, 때때로
+employee:직원, 고용인
+assist:돕다, 조력하다
+satisfied:만족하는, 만족스러워하는
 
-manage:~을 경영하다; 가까스로 하다
-handle:처리하다, 다루다
-succeed:성공하다
-submit:제출하다
-directly:곧바로
+manner:방식; 태도
+responsible:책임이 있는, 책임져야 할
+responsibillty:책임
+conduct:수행하다
+carry out: 수행하다, 실행하다
 
-remind:~에게 상기시키다, 일꺠우다
-reminder:메모, 상기시켜주는 것
-instruct:지시하다, 가르치다
-instruction:지시
-deadline:마감일, 마감시간
+adjust:적응하다, 조정하다
+personnel:직원, 인원; 인사과
+agree:동의하다
+supervise:감독하다, 지도하다
 
-sample:견본, 샘플, 표본; 시식하다, 시험하다
-notify:~에게 통지하다, 알리다
-announce:~을 발표하다
-reveal:~을 누설하다, ~을 폭로하다
-perform:행하다, 실행하다
+coworker:동료, 협력자
+direct:~에게 길을 안내하다, 가르쳐 주다
+receptionist:접수원
+confidential:기밀의, 내밀한
+assign:배정하다, 할당하다
 
-monitor:감독하다, 감시하다, 검토하다; 화면, 모니터
-deserve:~할 만하다, ~할 가치가 있다
-conduct:하다, 행동하다, 실행하다
-complete:완수하다, 완료하다
-assignment:일,임무,과제
+leading:선도적인, 일류의, 가장 중요한, 선두적인; 지도, 통솔
+formal:격식을 갖춘
+remove:해임하다, 제거하다
+collect:모으다, 수집하다
+coordinate:조정하다
+hardly:거의 ~하지 않다
 
-entire:전체의
-release:발표하다, 공개하다; 출시, 발매
-press release:보도 자료
-extension: 연장, 연기; (전화의)내선
-extend:늘리다, 연장하다
+abstract:추상적인; 막연한
+directory:주소록
+accountable:책임이 있는
+skillfully:능숙하게, 솜씨 있게
+exclusive:독점적인, 베타적인
 
-extensive: 광범위한, 포괄적인
-electronically:통신망으로, 컴퓨터로
-attendance:출근, 출석
-absolutely:절대적으로, 완전히
-delegate:(권한 등을)위임하다; 대표
-
-delegation:대표단,(권한의)위임
-attendantively:주의 깊게, 조심스럽게
-supervision:감독
-supervisor:감독관
-workshop:연수, 워크숍
-
-draw:끌다, 끌어당기다
-revision:수정, 개정
-reluctantly:마지못해, 꺼려하여
-acquaint:~에게 숙지시키다, 잘 알게 하다
-acquaintance:지인
-
-convey:(용건을)전달하다
-check:검사하다, 조사하다; 확인하다
-inspect: 검사하다
-examine:검사하다
-headquarters:본부
-
-file:(서류를)정리하다, (서류를)철하다; (서류나 신청 혹은 고소 등을)정식으로 제기하다, (서류나 신청 혹은 고소 등을)제출하다; 고소하다; 파일, 서류
-oversee:감독하다
-involved:관여하는, 관계된, 연루된
-concentrate: 집중하다, 집중시키다
-concentration: 집중

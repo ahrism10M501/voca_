@@ -1,4 +1,4 @@
-from DB_utils import *
+from utils.DB_utils import *
 
 """
 'beginner':0,
@@ -9,13 +9,13 @@ from DB_utils import *
 '<UNK>':5
 """
 day = 3
-voca_level = levelToIndex["elementary"]
+voca_level = levelToIndex["intermediate"]
 voca_file_path = "voca.txt"
 
-vocas = txtToList(voca_file_path)
+vocas = voca_file_path
 
 with DBConnect("./VOCA.db", auto_commit=True) as db:
-    db.addVocaToDB(vocas, voca_level, day)
+    db.dump(vocas, voca_level, day)
     # rows = DataGetter(db, "words", "word_id, word")
 
     # for row in rows:
