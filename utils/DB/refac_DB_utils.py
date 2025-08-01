@@ -1,0 +1,102 @@
+import logging
+import abc
+import sqlite3
+from typing import Optional
+from utils.FileProcessor import FileProcessor
+from _CRUD import *
+from _query import *
+
+"""
+디자인 패턴 연습용 프로젝트 이므로 오버엔지니어링은 어쩔 수 없다! 그래도 연습했잖아~ 한잔해~
+
+어떤 형상으로 만들까?
+1. 여러 DB를 사용할 수 있다고 가정
+ - 만약 sqlite3가 아니라 mysql, oracle, Mongo를 사용할때, 전의 코드는 로직을 다 바꿔야했다.
+ => DBConnect는 DBRepo를 받는다. DBRepo는 추상 클래스, 자식으로 Sqlite3Repo, MySQLRepo, MongoRepo... 등을 가진다. 
+
+2. 책임 분리
+ - load, dump, get, set, update, delete에 대한 책임을 분산하자.
+ => 마찬가지로 DBConnect 클래스로 다양한 서비스를 호출하고, 그들은 각자의 추상 클래스로 개발된다. 정격 아웃풋이 있으므로, 하위 메서드는 이를 구현하면 될 뿐.
+  궁금증은, 각 repo가 구현되었다면, 이것들을 구현하는것도 repo에게 맡겨야 할까?
+
+  예를 들어
+
+  DBConnect는 repo를 가진다. commit과 같은 인스턴스 호출 시 의존성 주입으로 새겨진 repo에 접근해서 이를 처리한다.
+  repo는 dump, load 등의 추상 클래스를 가진다. 이들은 팩토리 메서드를 이용해 분리된다?
+  근데 여기서 굳이 해야 할 까 라는 의문. dump와 load는 이미 repo를 통해 나뉜 상태임. 여기서 repo의 책임을 낮추기 위해서 하위 인스턴스를 패턴화해서 사용할 필요가 있을까?
+
+  어차피 각 db마다 dump나 load의 형식이 다른텐데, repo마다 하나씩이니까 상관없는거 아닌가?
+
+
+    DBRepository, ConnectionHandler, QueryService 로 기능 구분
+    CRUD , Connection, Query
+    DB repository는 DBIMplementor를 사용
+    DBimplementor를 상속 받는 각 db의 구현체 ex) sqliteImplementor
+    --> DBConnect를 DBrepository 위치에 넣어야 할 듯
+
+    db = sqliteImlementor()
+    with DBConnect(db) as db:
+        db.load
+
+"""
+class DBRepository:
+    def __init__(self, implementor: 'DBImplementor'):
+        self.impl = implementor
+    def load(self):
+        data = self.impl.load()
+        return data
+    
+    def __enter__(self):
+        self.impl.__enter__()
+    
+    def __exit__(self, exc_type, exc_value, exc_tb) -> bool:
+        self.impl.__exit__(exc_type, exc_value, exc_tb)
+        return True
+    
+class DBImplementor:
+    @abc.abstractmethod
+    def load(self): pass
+    @abc.abstractmethod
+    def dump(self): pass
+    @abc.abstractmethod
+    def query(self) -> Optional['SqliteQueryService']: pass
+    @abc.abstractmethod
+    def __enter__(self) -> 'DBImplementor': pass
+    @abc.abstractmethod
+    def __exit__(self, exc_type, exc_value, exc_tb) -> bool|None: pass
+
+class SqliteRepo(DBImplementor):
+    def __init__(self, path):
+        self.path = path
+        self.crud = CRUDService()
+        self.con:Optional[sqlite3.Connection] = None
+        self.cur:Optional[sqlite3.Cursor] = None
+        self.query_service:Optional[SqliteQueryService] = None
+
+    def query(self) -> Optional['SqliteQueryService']:
+        # with as db : db.query.findWordById 형식... 
+        return self.query_service
+
+    def load(self):
+        return SqliteCRUD(self.cur).load()
+
+    def __enter__(self) -> 'SqliteRepo':
+        self.con = sqlite3.connect(self.path)
+        self.cur = self.con.cursor()
+        self.query_service = SqliteQueryService(self.cur)
+        return self
+    
+    def __exit__(self, exc_type, exc_value, exc_tb) -> Optional[bool]:
+        try:
+            if self.con:
+                self.con.commit()
+                self.con.close()
+            else:
+                print("Warning: Connection was not established.")
+        except Exception as e:
+            print(f"Exit handling error: {e}")
+            return False
+
+        return exc_type is None
+    
+    

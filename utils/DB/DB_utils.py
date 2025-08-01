@@ -2,7 +2,6 @@ import re
 import logging
 import sqlite3
 from typing import Optional
-
 from utils.FileProcessor import FileProcessor
 
 """
@@ -16,23 +15,8 @@ DBConnect -> connect/cursor. commit/rollback,
 """
 
 
-__all__ = ['levelToIndex', 'indexToLevel', 'DBConnect', 'DataGetter']
+__all__ = ['DBConnect', 'DataGetter']
 
-levelToIndex = {'beginner':0,
-                'elementary':1,
-                'intermediate':2,
-                'advanced':3,
-                'native':4,
-                '<UNK>':5
-                }
-
-indexToLevel = {0:'beginner',
-                1:'elementary',
-                2:'intermediate',
-                3:'advanced',
-                4:'native',
-                5:'<UNK>'
-                }
 
 class DBConnect():
     def __init__(self, path, auto_commit=False):
