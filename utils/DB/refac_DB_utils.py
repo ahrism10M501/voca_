@@ -3,8 +3,9 @@ import abc
 import sqlite3
 from typing import Optional
 from utils.FileProcessor import FileProcessor
-from utils.DB._IConnection import *
-from utils.DB._ICRUD import *
+from utils.DB._iconnection import *
+from utils.DB._icrud import *
+from utils.DB._implementor import *
 
 """
 디자인 패턴 연습용 프로젝트 이므로 오버엔지니어링은 어쩔 수 없다! 그래도 연습했잖아~ 한잔해~
@@ -42,49 +43,19 @@ from utils.DB._ICRUD import *
 class DBRepository:
     def __init__(self, implementor: 'DBImplementor'):
         self.impl = implementor
+        self.crud: ICRUD|None = None
 
-    def load(self):
-        data = self.impl.load()
-        return data
+    def load(self, order_by=None):
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.load(order_by)
     
     def __enter__(self):
-        self.impl.__enter__()
+        self.crud = self.impl.__enter__()
         return self
     
     def __exit__(self, exc_type, exc_value, exc_tb):
         return self.impl.__exit__(exc_type, exc_value, exc_tb)
-    
-class DBImplementor:
-    @abc.abstractmethod
-    def load(self, order_by=None) -> list: pass
-    @abc.abstractmethod
-    def dump(self): pass
-    @abc.abstractmethod
-    def __enter__(self) -> 'DBImplementor': pass
-    @abc.abstractmethod
-    def __exit__(self, exc_type, exc_value, exc_tb) -> bool|None: pass
 
-class SqliteRepo(DBImplementor):
-    def __init__(self, path):
-        self.path = path
-        self.connection_handler = SqliteConnection(path)
-        self.cur:Optional[sqlite3.Cursor] = None
-
-    def load(self, order_by=None):
-        return self.crud.load(order_by)
-
-    def __enter__(self) -> 'SqliteRepo':
-        self.connection_handler.connect()
-        self.cur = self.connection_handler.get_cursor()
-        self.crud = SqliteCRUD(self.connection_handler)
-        return self
-    
-    def __exit__(self, exc_type, exc_value, exc_tb) -> Optional[bool]:
-        try:
-            self.connection_handler.commit()
-        except Exception as e:
-            print(f"Exit handling error: {e}")
-            return False
-        return exc_type is None
     
     

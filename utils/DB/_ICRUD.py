@@ -2,7 +2,7 @@ import abc
 from typing import Optional, cast
 import sqlite3
 import logging
-from _IConnection import IConnection
+from _iconnection import IConnection
 from utils.FileProcessor import *
 
 class ICRUD(abc.ABC):
@@ -14,13 +14,12 @@ class ICRUD(abc.ABC):
         
     @abc.abstractmethod
     def find(self, word_id=None, meaning_id=None, word=None, meaning=None, day=None, level=None) -> list: raise NotImplementedError("미구현 되었습니다")
-    
+
     @abc.abstractmethod
     def update(self, word_id:int, data:dict): raise NotImplementedError("미구현 되었습니다")
     
     @abc.abstractmethod
     def delete(self, word_id:int): raise NotImplementedError("미구현 되었습니다")
-
 
 class SqliteCRUD(ICRUD):
     def __init__(self, con:IConnection, auto_commit=False):
@@ -30,8 +29,9 @@ class SqliteCRUD(ICRUD):
             raise sqlite3.Error
         self.cur = cast(sqlite3.Cursor, self.curs)
 
-        self.words_column_list = ("word_id", "word", "day", "level")
-        self.meanings_column_list = ("meaning_id", "meaning")
+        from utils.constants import sql_columns as sc
+        self.words_column_list = sc["words_column_list"]
+        self.meanings_column_list = sc["meanings_column_list"]
 
         self.auto_commit = auto_commit
 
@@ -49,10 +49,9 @@ class SqliteCRUD(ICRUD):
         logging.info(f"the {len(vocas)} words are added on Database")
         return True
     
-    def load(self, order_by:str|None=None):
-        
+    def load(self, order_by=None):
         query = "SELECT * FROM words join meanings on words.word_id = meanings.word_id"
-
+        from utils.constants import sql_columns as sc
         if order_by:
             if order_by in self.words_column_list:
                 query += " ORDER BY words.{}".format(order_by)
@@ -64,6 +63,7 @@ class SqliteCRUD(ICRUD):
         self.cur.execute(query)
         return self.cur.fetchall()
     
+    # TODO : 인자를 받는 형식 변경, Column이 추가되더라도 대응하도록
     def find(self, word_id=None, meaning_id=None, word=None, meaning=None, day=None, level=None) -> list:
         query = "SELECT * FROM words wo, meaning me WHERE 1=1"
         params = []

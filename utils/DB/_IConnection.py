@@ -11,6 +11,8 @@ class IConnection(abc.ABC):
     @abc.abstractmethod
     def commit(self) -> bool: pass
     @abc.abstractmethod
+    def rollback(self) -> bool: pass
+    @abc.abstractmethod
     def get_cursor(self) -> Optional[sqlite3.Cursor]: pass
 
 class SqliteConnection(IConnection):
@@ -36,6 +38,12 @@ class SqliteConnection(IConnection):
             return True
         return False
         
+    def rollback(self) -> bool:
+        if self.con:
+            self.con.rollback()
+            return True
+        return False
+
     def get_cursor(self) -> Optional[sqlite3.Cursor]:
         if self.cur:
             return self.cur
