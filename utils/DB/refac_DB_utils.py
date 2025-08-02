@@ -3,8 +3,8 @@ import abc
 import sqlite3
 from typing import Optional
 from utils.FileProcessor import FileProcessor
-from _CRUD import *
-from _query import *
+from utils.DB._IConnection import *
+from utils.DB._ICRUD import *
 
 """
 디자인 패턴 연습용 프로젝트 이므로 오버엔지니어링은 어쩔 수 없다! 그래도 연습했잖아~ 한잔해~
@@ -42,24 +42,23 @@ from _query import *
 class DBRepository:
     def __init__(self, implementor: 'DBImplementor'):
         self.impl = implementor
+
     def load(self):
         data = self.impl.load()
         return data
     
     def __enter__(self):
         self.impl.__enter__()
+        return self
     
-    def __exit__(self, exc_type, exc_value, exc_tb) -> bool:
-        self.impl.__exit__(exc_type, exc_value, exc_tb)
-        return True
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        return self.impl.__exit__(exc_type, exc_value, exc_tb)
     
 class DBImplementor:
     @abc.abstractmethod
-    def load(self): pass
+    def load(self, order_by=None) -> list: pass
     @abc.abstractmethod
     def dump(self): pass
-    @abc.abstractmethod
-    def query(self) -> Optional['SqliteQueryService']: pass
     @abc.abstractmethod
     def __enter__(self) -> 'DBImplementor': pass
     @abc.abstractmethod
@@ -68,35 +67,24 @@ class DBImplementor:
 class SqliteRepo(DBImplementor):
     def __init__(self, path):
         self.path = path
-        self.crud = CRUDService()
-        self.con:Optional[sqlite3.Connection] = None
+        self.connection_handler = SqliteConnection(path)
         self.cur:Optional[sqlite3.Cursor] = None
-        self.query_service:Optional[SqliteQueryService] = None
 
-    def query(self) -> Optional['SqliteQueryService']:
-        # with as db : db.query.findWordById 형식... 
-        return self.query_service
-
-    def load(self):
-        return SqliteCRUD(self.cur).load()
+    def load(self, order_by=None):
+        return self.crud.load(order_by)
 
     def __enter__(self) -> 'SqliteRepo':
-        self.con = sqlite3.connect(self.path)
-        self.cur = self.con.cursor()
-        self.query_service = SqliteQueryService(self.cur)
+        self.connection_handler.connect()
+        self.cur = self.connection_handler.get_cursor()
+        self.crud = SqliteCRUD(self.connection_handler)
         return self
     
     def __exit__(self, exc_type, exc_value, exc_tb) -> Optional[bool]:
         try:
-            if self.con:
-                self.con.commit()
-                self.con.close()
-            else:
-                print("Warning: Connection was not established.")
+            self.connection_handler.commit()
         except Exception as e:
             print(f"Exit handling error: {e}")
             return False
-
         return exc_type is None
     
     
