@@ -1,12 +1,3 @@
-import logging
-import abc
-import sqlite3
-from typing import Optional
-from utils.FileProcessor import FileProcessor
-from utils.DB._iconnection import *
-from utils.DB._icrud import *
-from utils.DB._implementor import *
-
 """
 디자인 패턴 연습용 프로젝트 이므로 오버엔지니어링은 어쩔 수 없다! 그래도 연습했잖아~ 한잔해~
 
@@ -39,8 +30,31 @@ from utils.DB._implementor import *
     with DBConnect(db) as db:
         db.load
 
+
+    DBRepository에다가 Implementor를 주입해서 그걸 사용하는거지.
+    올바른 crud 객체를 받아와서 그 안의 메서드를 사용하는거임
+    이때 crud 객체는 implementor가 반환해줌
+
+    이제 직접적인 구현은 DBRepo가 하믄 됨.
+    즉, 쓰잘데기 없는건 다른 애들이 해주고, 명령은 DBRepo가 내린다!
+
+    왕과 귀족과 하인 들로 이루어진 우아한 권력 계층 ㄷㄷ
+
+    bridge -> strategy
+
+    브릿지를 쓰는 이유는 DBOpen 녀석이 지혼자 이상한 기능을 만들 수도 있기 떄문이다! 
+    코드 유연성 확보!!!
 """
-class DBRepository:
+
+import logging
+import abc
+import sqlite3
+from typing import Optional
+from utils.FileProcessor import FileProcessor
+from utils.DB._iconnection import *
+from utils.DB._icrud import *
+
+class DBOpen:
     def __init__(self, implementor: 'DBImplementor'):
         self.impl = implementor
         self.crud: ICRUD|None = None
@@ -49,13 +63,60 @@ class DBRepository:
         if not self.crud:
             raise ConnectionError
         return self.crud.load(order_by)
-    
+
+    def dump(self, vocas, day, level):
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.dump(vocas, day, level)
+
+    def dump_to_file(self, path):
+        pass
+
+    def find(self, target:dict):
+        """
+        target은 { columns:condition(str,num,list,tuple) } 형태의 딕셔너리여야만 합니다.
+        """
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.find(target)
+            
     def __enter__(self):
         self.crud = self.impl.__enter__()
         return self
     
     def __exit__(self, exc_type, exc_value, exc_tb):
         return self.impl.__exit__(exc_type, exc_value, exc_tb)
+    
+class DBImplementor:
+    @abc.abstractmethod
+    def __enter__(self) -> 'ICRUD': pass
+    @abc.abstractmethod
+    def __exit__(self, exc_type, exc_value, exc_tb) -> bool|None: pass
+
+class SqliteRepo(DBImplementor):
+    def __init__(self, path):
+        self.path = path
+        self.connection_handler:IConnection = SqliteConnection(path)
+        self.cur:Optional[sqlite3.Cursor] = None
+
+    def __enter__(self) -> 'ICRUD':
+        self.connection_handler.connect()
+        self.cur = self.connection_handler.get_cursor()
+        self.crud = SqliteCRUD(self.connection_handler)
+        return self.crud
+    
+    def __exit__(self, exc_type, exc_value, exc_tb) -> Optional[bool]:
+        try:
+            if exc_type is None:
+                self.connection_handler.commit()
+            else:
+                self.connection_handler.rollback()
+            self.connection_handler.close()
+        except Exception as e:
+            print(f"Exit handling error: {e}")
+            return False
+        finally:
+            return exc_type is None
 
     
     

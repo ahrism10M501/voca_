@@ -2,32 +2,31 @@ import abc
 from typing import Optional, cast
 import sqlite3
 import logging
-from _iconnection import IConnection
+from utils.DB._iconnection import *
 from utils.FileProcessor import *
 
 class ICRUD(abc.ABC):
     @abc.abstractmethod
-    def dump(self, vocas:list|tuple, level:int, day:int): raise NotImplementedError("미구현 되었습니다")
+    def dump(self, vocas:list|tuple, level:int, day:int): raise NotImplementedError("dump가 미구현 되었습니다")
 
     @abc.abstractmethod
-    def load(self, order_by:str|None=None) -> list: raise NotImplementedError("미구현 되었습니다")
+    def load(self, order_by:str|None=None) -> list: raise NotImplementedError("load가 미구현 되었습니다")
         
     @abc.abstractmethod
-    def find(self, word_id=None, meaning_id=None, word=None, meaning=None, day=None, level=None) -> list: raise NotImplementedError("미구현 되었습니다")
+    def find(self, target:dict) -> list: raise NotImplementedError("find가 미구현 되었습니다")
 
     @abc.abstractmethod
-    def update(self, word_id:int, data:dict): raise NotImplementedError("미구현 되었습니다")
+    def update(self, word_id:int, data:dict): raise NotImplementedError("update가 미구현 되었습니다")
     
     @abc.abstractmethod
-    def delete(self, word_id:int): raise NotImplementedError("미구현 되었습니다")
+    def delete(self, word_id:int): raise NotImplementedError("delete가 미구현 되었습니다")
 
 class SqliteCRUD(ICRUD):
     def __init__(self, con:IConnection, auto_commit=False):
         self.con = con
-        self.curs = con.get_cursor()
+        self.cur:sqlite3.Cursor|None = con.get_cursor()
         if self.cur is None:
             raise sqlite3.Error
-        self.cur = cast(sqlite3.Cursor, self.curs)
 
         from utils.constants import sql_columns as sc
         self.words_column_list = sc["words_column_list"]
@@ -35,7 +34,12 @@ class SqliteCRUD(ICRUD):
 
         self.auto_commit = auto_commit
 
+    # HACK: dump하는 과정을 다르게 바꿔야할듯. 특히 인자값. pandas를 쓰면 다르게 받아올 거임. 
+    # FIleProcessor 도 손봐야함. 지금은 (word, meaning) 쌍으로 저장 및 부르는데 DB 형식과 안 맞을뿐더러 그 떄문에 이상해짐.
+    # 특히, 새로운 column이 생겼을떄 대처가 안 된다는 것도 문제. key값을 받아서 사용하는게 좋을 듯.
     def dump(self, vocas:list|tuple, level:int, day:int):
+        if self.cur is None:
+            raise sqlite3.Error
         vocas = FileProcessor._PreProcess(vocas)
         for word, mean in vocas:
             self.cur.execute("INSERT OR IGNORE INTO words (word, level, day) VALUES (?, ?, ?)", (word, level, day))
@@ -50,8 +54,10 @@ class SqliteCRUD(ICRUD):
         return True
     
     def load(self, order_by=None):
-        query = "SELECT * FROM words join meanings on words.word_id = meanings.word_id"
-        from utils.constants import sql_columns as sc
+        if self.cur is None:
+            raise sqlite3.Error
+        query = f"SELECT * FROM words join meanings on words.word_id = meanings.word_id"
+        
         if order_by:
             if order_by in self.words_column_list:
                 query += " ORDER BY words.{}".format(order_by)
@@ -63,34 +69,34 @@ class SqliteCRUD(ICRUD):
         self.cur.execute(query)
         return self.cur.fetchall()
     
-    # TODO : 인자를 받는 형식 변경, Column이 추가되더라도 대응하도록
-    def find(self, word_id=None, meaning_id=None, word=None, meaning=None, day=None, level=None) -> list:
-        query = "SELECT * FROM words wo, meaning me WHERE 1=1"
+    def find(self, target:dict) -> list:
+        if self.cur is None:
+            raise sqlite3.Error
+        query = "SELECT * FROM words wo INNER JOIN meanings me ON wo.word_id=me.word_id WHERE 1=1 "
         params = []
 
-        if word_id:
-            query += " AND wo.word_id = ?"
-            params.append(word_id)
-        if meaning_id:
-            query += " AND me.meaning_id = ?"
-            params.append(meaning_id)
-        if word:
-            query += " AND wo.word = ?"
-            params.append(word)
-        if meaning:
-            query += " AND me.meaning = ?"
-            params.append(meaning)
-        if day:
-            query += " AND wo.day = ?"
-            params.append(day)
-        if level:
-            query += " AND wo.level = ?"
-            params.append(level)
-        
+        for k, v in target.items():
+            if k in self.words_column_list:
+                table = "wo"
+            elif k in self.meanings_column_list:
+                table = "me"
+            else:
+                raise ValueError(f"Invalid Column name {k}")
+            
+            if isinstance(v, (list, tuple)):
+                qm = ",".join("?" * len(v))
+                query += f" AND {table}.{k} IN ({qm})" # AND wo.word_id IN (?, ?, ?)
+                params.extend(v)
+            else:
+                query += f" AND {table}.{k} = ?"
+                params.append(v)
+    
         self.cur.execute(query, tuple(params))
         return self.cur.fetchall()
     
     def update(self, word_id:int, data:dict):
+        if self.cur is None:
+            raise sqlite3.Error
         for key in data.keys():
             if key in self.words_column_list:
                 query = f"UPDATE words SET {key} = ? FROM words WHERE word_id = {word_id}"
@@ -103,6 +109,8 @@ class SqliteCRUD(ICRUD):
                 continue
 
     def delete(self, word_id:int):
+        if self.cur is None:
+            raise sqlite3.Error
         # FIXME: If the meanings table doesn't have 'the ON DELETE CASCADE' property, it's workaround
         query = "DELETE FROM words WHERE word_id = ?"
         self.cur.execute(query, (word_id, ))
