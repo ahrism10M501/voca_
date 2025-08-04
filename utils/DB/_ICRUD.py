@@ -1,7 +1,7 @@
 import abc
 import sqlite3
 import logging
-from utils.DB._iconnection import *
+from utils.DB._IConnection import *
 from utils.FileProcessor import *
 
 class ICRUD(abc.ABC):

@@ -54,8 +54,8 @@ import abc
 import sqlite3
 from typing import Optional
 from utils.FileProcessor import FileProcessor
-from utils.DB._iconnection import *
-from utils.DB._icrud import *
+from utils.DB._IConnection import *
+from utils.DB._ICRUD import *
 
 class DBOpen:
     def __init__(self, implementor: 'DBImplementor'):
