@@ -1,3 +1,4 @@
+import _path_ as _path_
 from utils.DB.DB_utils import *
 
 db_path = "VOCA.DB"
