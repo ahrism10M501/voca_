@@ -1,243 +1,141 @@
-import re
+"""
+디자인 패턴 연습용 프로젝트 이므로 오버엔지니어링은 어쩔 수 없다! 그래도 연습했잖아~ 한잔해~
+
+어떤 형상으로 만들까?
+1. 여러 DB를 사용할 수 있다고 가정
+ - 만약 sqlite3가 아니라 mysql, oracle, Mongo를 사용할때, 전의 코드는 로직을 다 바꿔야했다.
+ => DBConnect는 DBRepo를 받는다. DBRepo는 추상 클래스, 자식으로 Sqlite3Repo, MySQLRepo, MongoRepo... 등을 가진다. 
+
+2. 책임 분리
+ - load, dump, get, set, update, delete에 대한 책임을 분산하자.
+ => 마찬가지로 DBConnect 클래스로 다양한 서비스를 호출하고, 그들은 각자의 추상 클래스로 개발된다. 정격 아웃풋이 있으므로, 하위 메서드는 이를 구현하면 될 뿐.
+  궁금증은, 각 repo가 구현되었다면, 이것들을 구현하는것도 repo에게 맡겨야 할까?
+
+  예를 들어
+
+  DBConnect는 repo를 가진다. commit과 같은 인스턴스 호출 시 의존성 주입으로 새겨진 repo에 접근해서 이를 처리한다.
+  repo는 dump, load 등의 추상 클래스를 가진다. 이들은 팩토리 메서드를 이용해 분리된다?
+  근데 여기서 굳이 해야 할 까 라는 의문. dump와 load는 이미 repo를 통해 나뉜 상태임. 여기서 repo의 책임을 낮추기 위해서 하위 인스턴스를 패턴화해서 사용할 필요가 있을까?
+
+  어차피 각 db마다 dump나 load의 형식이 다른텐데, repo마다 하나씩이니까 상관없는거 아닌가?
+
+
+    DBRepository, ConnectionHandler, QueryService 로 기능 구분
+    CRUD , Connection, Query
+    DB repository는 DBIMplementor를 사용
+    DBimplementor를 상속 받는 각 db의 구현체 ex) sqliteImplementor
+    --> DBConnect를 DBrepository 위치에 넣어야 할 듯
+
+    db = sqliteImlementor()
+    with DBConnect(db) as db:
+        db.load
+
+
+    DBRepository에다가 Implementor를 주입해서 그걸 사용하는거지.
+    올바른 crud 객체를 받아와서 그 안의 메서드를 사용하는거임
+    이때 crud 객체는 implementor가 반환해줌
+
+    이제 직접적인 구현은 DBRepo가 하믄 됨.
+    즉, 쓰잘데기 없는건 다른 애들이 해주고, 명령은 DBRepo가 내린다!
+
+    왕과 귀족과 하인 들로 이루어진 우아한 권력 계층 ㄷㄷ
+
+    bridge -> strategy
+
+    브릿지를 쓰는 이유는 DBOpen 녀석이 지혼자 이상한 기능을 만들 수도 있기 떄문이다! 
+    코드 유연성 확보!!! CRUD를 기본 바탕으로 고급 구현을 하는거지.
+    예를 들어, 난이도 별로 뽑아오기
+    뭐 이런거
+
+"""
+
 import logging
+import abc
 import sqlite3
 from typing import Optional
 from utils.FileProcessor import FileProcessor
+from utils.DB._iconnection import *
+from utils.DB._icrud import *
 
-"""
-SQL형식의 DB에 업로드하거나, 업데이트 하거나, 불러오기 위한 클래스
+class DBOpen:
+    def __init__(self, implementor: 'DBImplementor'):
+        self.impl = implementor
+        self.crud: ICRUD|None = None
 
-지금은 너무 패턴이 어렵다!!!
-DBConnect 클래스의 책임이 너무 크다. CRUD를 분리해서 관리하고, DBConnect는 with문을 통해 이들을 통제하는 팩토리가 되면 좋겠다.
+    def load(self, order_by=None):
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.load(order_by)
 
-책임 분산
-DBConnect -> connect/cursor. commit/rollback, 
-"""
-
-
-__all__ = ['DBConnect', 'DataGetter']
-
-
-class DBConnect():
-    def __init__(self, path, auto_commit=False):
-        
-        self.path = path
-        # HACK : 하드코딩 된 부분 고쳐야 합니다.
-        self.tables = ('words', 'meanings')
-
-        self.con = sqlite3.connect(path)
-        logging.info(f"DB {path} is connected")
-        self.cur = self.con.cursor()
-        
-        self.cur.execute(f"PRAGMA table_info({self.tables[0]})")
-        self.words_columns = [row[1] for row in self.cur.fetchall()]
-
-        self.cur.execute(f"PRAGMA table_info({self.tables[1]})")
-        self.meanings_columns = [row[1] for row in self.cur.fetchall()]
-
-        self.auto_commit = auto_commit
-
-    def __del__(self):
-        self.con.close()
-
-    def dump(self, vocas:list|tuple, level:int, day:int) -> bool:
+    def dump(self, vocas, day, level):
         """
-        list(tuple(str, str))로 받은 단어 정보를 저장합니다.
-        level과 day는 별개로 지정해주세요.
+        vocas = [(word, meaning), (..., ...)]
         """
-        vocas = FileProcessor._PreProcess(vocas)
-        for word, mean in vocas:
-            self.cur.execute("INSERT OR IGNORE INTO words (word, level, day) VALUES (?, ?, ?)", (word, level, day))
-            self.cur.execute("SELECT word_id FROM words WHERE word = ?", (word,))
-            word_id = self.cur.fetchone()[0]
-            self.cur.execute("INSERT OR IGNORE INTO meanings (word_id, meaning) VALUES (?, ?)", (word_id, mean))
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.dump(vocas, day, level)
 
-        if self.auto_commit:
-            self.con.commit()
+    def dump_to_file(self, path):
+        if not self.crud:
+            raise ConnectionError
+        data = self.crud.find(columns=["word", "meaning"])
+        fp = FileProcessor()
+        return fp.dump(path, data)
 
-        logging.info(f"the {len(vocas)} words are added on Database")
-        return True
-
-    def load(self, target):
+    def find(self, condition:dict|None=None, columns:list|None=None):
         """
-        target은 반드시 앞에 테이블명.타겟명
+        condition은 {column1:value1, column2:value2} 의 딕셔너리 형태
+        columns는 [column1, column2] 의 리스트 형태
+        return은 [(values), (...)] 의 list(tuple(values)) 형태
         """
-        if ';' in target:
-            logging.warning("SQL Injection Detected!")
-            raise ValueError("Semicolons are not allowed in table or targets.")
-        
-        query = f"SELECT {target} FROM words left join meanings on words.word_id = meanings.word_id ORDER BY words.word_id"
-        self.cur.execute(query)
-        return self.cur.fetchall()
-
-    def updateDataByWord(self, word, target, data, num:Optional[int] = None) -> bool:
-        """
-        단어를 토대로 words 테이블의 정보를 수정합니다.
-        뜻이 여러 개일 경우, num으로 수정 대상을 선택하세요.
-        """
-        if target in self.meanings_columns:
-            return self._updateMeaningsByWord(word, target, data, num)
-        elif target in self.words_columns:
-            return self._updateWordsByWord(word, target, data)
-        else:
-            raise ValueError("Invalid Column name")
-
-    def _updateWordsByWord(self, word, target, data):
-        query = f"SELECT word_id, {target} FROM words WHERE word = ?"
-        self.cur.execute(query, (word,))
-        diff = self.cur.fetchone()
-        if not diff:
-            raise ValueError("Word not found")
-        
-        query = f"UPDATE words SET {target} = ? WHERE word = ?"
-        self.cur.execute(query, (data, word))
-
-        if self.auto_commit:
-            self.con.commit()
-
-        logging.info(f"{word}'s {target} updated from {diff[1]} to {data}: word_id={diff[0]}")
-
-        return True
-
-    def _updateMeaningsByWord(self, word, target, data, num:Optional[int] = None):
-        self.cur.execute("SELECT word_id FROM words WHERE word = ?", (word,))
-        word_id = self.cur.fetchone()
-        if not word_id:
-            raise ValueError("Word not found")
-        word_id = word_id[0]
-
-        self.cur.execute("SELECT meaning_id, meaning FROM meanings WHERE word_id = ?", (word_id,))
-        means = self.cur.fetchall()
-        if not means:
-            raise ValueError("Meanings not found")
-
-        if len(means) > 1:
-            if num is None or not (0 <= num < len(means)):
-                raise ValueError(f"Invalid Num. Must be 0 ~ {len(means)-1}")
-            mean_id = means[num][0]
-            old_mean = means[num][1]
-        else:
-            mean_id = means[0][0]
-            old_mean = means[0][1]
-
-        query = f"UPDATE meanings SET {target} = ? WHERE meaning_id = {mean_id}"
-        self.cur.execute(query, (data,))
-
-        if self.auto_commit:
-            self.con.commit()
-
-        logging.info(f"{word}'s {target} updated from {old_mean} to {data}: meaning_id={mean_id}")
-
-        return True
-
-    def commit(self):
-        self.con.commit()
-        logging.info("DB commited")
-        return True
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.find(condition, columns)
     
-    def close(self):
-        self.con.close()
-        logging.info("DB closed")
-        return True
-    
-    def reconnect(self, retry=5):
-        import time
-        for num in range(retry):
-            if not self.con:
-                try:
-                    logging.info(f"DB connecting... attempt {num+1}")
-                    self.con = sqlite3.connect(self.path)
-                    self.cur = self.con.cursor()
-                    return True
-                except sqlite3.Error as e:
-                    logging.error(f"Connection ERROR: {e}")
-                    time.sleep(1)
-            else:
-                print("DB is already connected")
-                return True
-        return False
+    def update(self, condition:dict, data:dict):
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.update(condition, data)
+
+    def delete(self, condition:dict):
+        if not self.crud:
+            raise ConnectionError
+        return self.crud.delete(condition)
 
     def __enter__(self):
+        self.crud = self.impl.__enter__()
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type:
-            logging.error(f"Exception: {exc_type}, {exc_val}")
-            return False
-        
-        self.commit() if self.auto_commit else None
-        self.close()
-        return True
-
-class DataGetter():
-    def __init__(self, db: DBConnect, table:str, targets:str, batch_size=128):
-        self.batch_size = batch_size
-        self.con = db.con
-        self.cur = db.cur
-        self.words_columns = db.words_columns
-        self.commit = db.commit if db.auto_commit else None
-
-        if ";" in table or ";" in targets:
-            logging.warning("SQL Injection Detected!")
-            raise ValueError("Semicolons are not allowed in table or targets.")
-        
-        if table not in db.tables:
-            raise ValueError("Invalid table name")
-
-        for col in targets.split(','):
-            if col.strip() not in self.words_columns:
-                raise ValueError(f"Invalid column name: {col.strip()}")
-
-        self.table = table
-        self.targets = targets
-
-        self.pk_col = "word_id" if table == "words" else "meaning_id"
-
-    def findMeanByWord(self, word:str) -> list[str]:
-            """
-            find means by one word from DB, and return list type object
-            """
-            query = """
-            SELECT meaning FROM words wo, meanings me 
-            WHERE wo.word= ? AND wo.word_id = me.word_id
-            """
-            self.cur.execute(query, (word,))
-            means = self.cur.fetchall()
-
-            return [m[0] for m in means]
-
-    def __len__(self):
-        self.cur.execute(f"SELECT COUNT(*) FROM {self.table}")
-        return self.cur.fetchone()[0]
-
-    def __getitem__(self, idx):
-        if isinstance(idx, slice):
-            start = 0 if idx.start is None else idx.start
-            stop = 1<<30 if idx.stop is None else idx.stop
-            step = 1 if idx.step is None else idx.step
-
-            query = f"SELECT {self.targets} FROM {self.table} LIMIT ? OFFSET ? ORDER BY {self.pk_col}"
-            self.cur.execute(query, (stop-start, start))
-            return self.cur.fetchall()[::step]
-
-        query = f"SELECT {self.targets} FROM {self.table} LIMIT 1 OFFSET ? ORDER BY {self.pk_col}"
-        self.cur.execute(query, (idx,))
-        return self.cur.fetchone()
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        return self.impl.__exit__(exc_type, exc_value, exc_tb)
     
-    def __iter__(self):
-        query = f"SELECT {self.targets} FROM {self.table} ORDER BY {self.pk_col}"
-        self.cur.execute(query)
-        while True:
-            rows = self.cur.fetchmany(self.batch_size)
-            if not rows:
-                break
-            for row in rows:
-                yield row
+class DBImplementor:
+    @abc.abstractmethod
+    def __enter__(self) -> 'ICRUD': pass
+    @abc.abstractmethod
+    def __exit__(self, exc_type, exc_value, exc_tb) -> bool|None: pass
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-        datefmt="%Y.%m.%d %H:%M:%S",
-        filename="voca.log"
-    )
+class SqliteDB(DBImplementor):
+    def __init__(self, path):
+        self.path = path
+        self.connection_handler:IConnection = SqliteConnection(path)
+        self.cur:Optional[sqlite3.Cursor] = None
+
+    def __enter__(self) -> 'ICRUD':
+        self.connection_handler.connect()
+        self.cur = self.connection_handler.get_cursor()
+        self.crud = SqliteCRUD(self.connection_handler)
+        return self.crud
+    
+    def __exit__(self, exc_type, exc_value, exc_tb) -> Optional[bool]:
+        try:
+            if exc_type is None:
+                self.connection_handler.commit()
+            else:
+                self.connection_handler.rollback()
+            self.connection_handler.close()
+        except Exception as e:
+            print(f"Exit handling error: {e}")
+            return False
+        finally:
+            return exc_type is None
