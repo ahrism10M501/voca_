@@ -53,9 +53,9 @@ import logging
 import abc
 import sqlite3
 from typing import Optional
-from utils.FileProcessor import FileProcessor
 from utils.DB._IConnection import *
 from utils.DB._ICRUD import *
+from utils.FileProcessor import *
 
 class DBOpen:
     def __init__(self, implementor: 'DBImplementor'):
@@ -66,6 +66,24 @@ class DBOpen:
         if not self.crud:
             raise ConnectionError
         return self.crud.load(order_by)
+
+    def filter(self, data, condition:dict):
+        # data must be data earning by 'load' method
+        # 만약 util이 더 많아지면 따로 빼기. 다른 데이터를 불러오는 함수는 정격화된 출력을 return해야하므로 db에 넣음
+        # FIXME : Hardcoding
+        condition_enum = {
+            "word_id":0,
+            "word":1,
+            "day":2,
+            "level":3,
+            "meaning_id":4,
+            "word_id":5,
+            "meaning":6
+        }
+        filtered_data = []
+        for k, v in condition.items():
+           filtered_data.append(filter(lambda x: x[condition_enum[k]]> v, data))
+        return filtered_data
 
     def dump(self, vocas, day, level):
         """
@@ -79,7 +97,7 @@ class DBOpen:
         if not self.crud:
             raise ConnectionError
         data = self.crud.find(columns=["word", "meaning"])
-        fp = FileProcessor()
+        fp = TextFileProcessor()
         return fp.dump(path, data)
 
     def find(self, condition:dict|None=None, columns:list|None=None):
@@ -110,6 +128,8 @@ class DBOpen:
         return self.impl.__exit__(exc_type, exc_value, exc_tb)
     
 class DBImplementor:
+    @abc.abstractmethod
+    def filter(self, data, condition) -> list: pass
     @abc.abstractmethod
     def __enter__(self) -> 'ICRUD': pass
     @abc.abstractmethod

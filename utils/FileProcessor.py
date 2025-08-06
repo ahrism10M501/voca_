@@ -17,7 +17,7 @@ import csv
 import xml.etree.ElementTree as ET
 import json
 
-__all__ = ['FileProcessor']
+__all__ = ['TextFileProcessor']
 
 class StringToList(abc.ABC):
     @abc.abstractmethod
@@ -124,7 +124,7 @@ class xmlHandler(StringToList):
         tree.write(path, encoding=encoding, xml_declaration=True)
         return True
 
-class FileProcessor:
+class TextFileProcessor:
     @staticmethod
     def _get_handler(path:str) -> StringToList:
         if path.endswith(".txt"):
@@ -140,7 +140,7 @@ class FileProcessor:
         
     @staticmethod
     def load(path, encoding='utf-8') -> list:
-        handler = FileProcessor._get_handler(path)
+        handler = TextFileProcessor._get_handler(path)
         return handler.load(path, encoding)
     
     @staticmethod
@@ -174,6 +174,6 @@ class FileProcessor:
         2차원 형식의 배열이어야 합니다.
         return [(word, meaning), (word, meaning), ...]
         """
-        handler = FileProcessor._get_handler(path)
-        data = FileProcessor._PreProcess(data)
+        handler = TextFileProcessor._get_handler(path)
+        data = TextFileProcessor._PreProcess(data)
         return handler.dump(path, data, encoding)

@@ -134,3 +134,144 @@ workbook에는 share를 추가하고 관련된 전략 클래스들을 생성해�
 
 특히 TextWriter 종류는 FileProcessor를 사용하고 싶으니, 나는 미리미리 수정을 해야하겠다.
 """
+
+# 애초에 데이터를 정제해서 넘겨받으면 되는거 아니냐?
+# 애초에 원하는 day, level의 데이터를 클라이언트가 준다면 전체적으로 쉬워짐
+
+
+"""
+사용 예시
+path = "VOCA.DB"
+sqiltedb = sqilteDB(path)
+
+with DBOpen(sqlitedb) as db:
+    data = db.load()
+    data = db.filter(data, condition:dict)
+
+template = ImageTemplate("ko", 30)
+workbook = template.make(data)
+# 같은 데이터도 여러 템플릿으로 만들 수 있는 유연성 제공
+
+# workbook의 내용을 저장해놓고 나중에 다시 불러오기 가능
+workbook.dump(save_path) # Workbook객체를 저장하는 법?
+workbook.save(JPGWriter(save_path))
+"""
+
+import abc
+import random
+from typing import Dict, Tuple
+from PIL import Image
+
+class VocaTemplate(abc.ABC):
+    def __init__(self, type):
+        self.type = type
+        self.ratio = 0.5 # ratio가 1에 가까울 수록 영어를 블러처리( both에 대한 해결책)
+
+    def seed(self, seed):
+        random.seed(seed)
+        return True
+    
+    @abc.abstractmethod
+    def make(self, voca) -> 'Workbook': pass
+
+    @staticmethod
+    def _preprocess(data):
+        data = [(word, meaning) for word_id, word, day, level, meaning_id, word_id2, meaning in data]
+        voca = {}
+        temp = []
+        for word, mean in data:
+            if word in voca.keys():
+                voca[word].append(mean)
+            else:
+                voca[word] = [mean]
+        for k, v in voca.items():
+            temp.append((k, ", ".join(v)))
+        return temp
+    
+    def blanker(self, data, blank_type="_____"):
+        temp = []
+        if self.type == 'ko':
+            for word, mean in data:
+                temp.append((mean, blank_type))
+        elif self.type == 'en':
+            for word, mean in data:
+                temp.append((word, blank_type))
+        elif self.type == 'both':
+            # FIXME : 임시 조치로 비율을 대충 산정함. ratio가 더 덩당하게 적용되도록 만들어야한다.
+            choice = round(random.random()+self.ratio/2)
+            for row in data:
+                temp.append((row[choice], blank_type))
+        else:
+            raise ValueError("Invalid Form Type")
+        return temp
+
+class TextTemplate(VocaTemplate):
+    def __init__(self, type):
+        super().__init__(type)
+
+    def make(self, voca):
+        data = VocaTemplate._preprocess(voca)
+        data = self.blanker(data)
+        return Workbook(data)
+
+class ImageTemplate(VocaTemplate):
+    def __init__(self, path, type):
+        super().__init__(type)
+        self.path = path
+
+    def make(self, voca):
+        data = VocaTemplate._preprocess(voca)
+        data = self.blanker(data)
+        writer_data = {}
+        writer_data["path"] = self.path
+        # 이미지 마다 어떤 위치에 어떤 식으로 글자를 쓸 것인지 미리 지정해주어야 한다.
+        # 이를 어떻게 저장하고 있을 것이며, 어떻게 처리할 것인가?
+        writer_data["image"] = Image.open(self.path) # 미구현
+        writer_data["pos"] = open(self.path).read()
+        writer_data["voca"] = data
+        return Workbook(writer_data)
+
+from utils.FileProcessor import TextFileProcessor
+
+class FileWriter(abc.ABC):
+    @abc.abstractmethod
+    def write(self, data): pass
+    
+class ImageWriter(FileWriter):
+    def __init__(self, save_path):
+        self._save_path = save_path
+
+    def write(self, data):
+        pass
+
+class TextWriter(FileWriter):
+    def __init__(self, save_path):
+        self._save_path = save_path
+    def write(self, data):
+        TextFileProcessor.dump(self._save_path, data)
+
+class Workbook:
+    def __init__(self, data):
+        self.data = data
+
+    def load(self):
+        pass
+
+    def save(self, writer:FileWriter):
+        return writer.write(self.data)
+    
+# 패턴 수준... 복잡시러워!!! 
+# 구조 다시 짜야 할 듯. 특히 Image, Text 나누는 것부터 잘못됨.
+
+if __name__ == "__main__":
+    from utils.DB.DB_utils import *
+    
+    sqlite = SqliteDB("VOCA.DB")
+    with DBOpen(sqlite) as db:
+        data = db.load()
+
+    templ = TextTemplate("ko")
+    workbook = templ.make(data[:20])
+
+    workbook.save(TextWriter("workbook_ex.csv"))
+    

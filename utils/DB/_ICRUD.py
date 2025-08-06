@@ -61,7 +61,7 @@ class SqliteCRUD(ICRUD):
     def dump(self, vocas:list|tuple, level:int, day:int) -> bool:
         if self.cur is None:
             raise sqlite3.Error
-        vocas = FileProcessor._PreProcess(vocas) # [(word, meaning), (..., ...)]
+        vocas = TextFileProcessor._PreProcess(vocas) # [(word, meaning), (..., ...)]
        
         words = [(word, level, day) for word, _ in vocas]
         self.cur.executemany(f"INSERT OR IGNORE INTO words (word, level, day) VALUES (?, ?, ?)", words)
