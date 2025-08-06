@@ -198,8 +198,8 @@ class VocaTemplate(abc.ABC):
                 temp.append((word, blank_type))
         elif self.type == 'both':
             # FIXME : 임시 조치로 비율을 대충 산정함. ratio가 더 덩당하게 적용되도록 만들어야한다.
-            choice = round(random.random()+self.ratio/2)
             for row in data:
+                choice = round(random.random()+self.ratio/2)
                 temp.append((row[choice], blank_type))
         else:
             raise ValueError("Invalid Form Type")
@@ -265,12 +265,12 @@ class Workbook:
 
 if __name__ == "__main__":
     from utils.DB.DB_utils import *
-    
+
     sqlite = SqliteDB("VOCA.DB")
     with DBOpen(sqlite) as db:
         data = db.load()
 
-    templ = TextTemplate("ko")
+    templ = TextTemplate("both")
     workbook = templ.make(data[:20])
 
     workbook.save(TextWriter("workbook_ex.csv"))
