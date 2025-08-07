@@ -97,7 +97,7 @@ class DBOpen:
         if not self.crud:
             raise ConnectionError
         data = self.crud.find(columns=["word", "meaning"])
-        fp = TextFileProcessor()
+        fp = FileProcessor()
         return fp.dump(path, data)
 
     def find(self, condition:dict|None=None, columns:list|None=None):

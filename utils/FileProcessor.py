@@ -11,138 +11,30 @@
 파일로 출력하는 클래스.
 """
 
+import os
 import re
 import abc
-import csv
-import xml.etree.ElementTree as ET
-import json
+from utils._text_handler import _text_handler, txtHandler, csvHandler, jsonHandler, xmlHandler
+from utils._image_handler import _image_handler, jpgHandler, pngHandler
 
-__all__ = ['TextFileProcessor']
+__all__ = ['FileProcessor']
 
-class StringToList(abc.ABC):
-    @abc.abstractmethod
-    def load(self, path, encoding) -> list:
-        pass
+class FileProcessor():
+    _HANDELERS = {
+        ".txt":txtHandler,
+        ".csv":csvHandler,
+        ".json":jsonHandler,
+        ".xml":xmlHandler
+    }
 
-    @abc.abstractmethod
-    def dump(self, path, data, encoding) -> bool:
-        pass
-
-class txtHandler(StringToList):
-    def load(self, path, encoding) -> list:
-        voca = []
-        with open(path, 'r', encoding=encoding) as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                word, meaning = line.strip().split(':', 1)
-                word = word.strip()
-                meanings = re.split(r'[;,]', meaning.strip())
-                for mean in meanings:
-                    mean = mean.strip()
-                    if mean:
-                        voca.append((word, mean))
-        return voca
-    
-    def dump(self, path, data, encoding) -> bool:
-        with open(path, 'w', encoding=encoding) as f:
-            for word, meaning in data:
-                if isinstance(meaning, list|tuple):
-                    meaning = ','.join(meaning)
-                f.write(f"{word}:{meaning}\n")
-        return True
-    
-class csvHandler(StringToList):
-    def load(self, path, encoding) -> list:
-        voca = []
-        with open(path, 'r', encoding=encoding) as f:
-            rdr = csv.reader(f)
-            for line in rdr:
-                if not line:
-                    continue
-                word = line[0]
-                meaning = line[1]
-                meanings = re.split(r'[;,]', meaning.strip())
-                for mean in meanings:
-                    mean = mean.strip()
-                    if mean:
-                        voca.append((word, mean))
-        return voca
-    
-    def dump(self, path, data, encoding) -> bool:
-        with open(path, 'w', encoding=encoding) as f:
-            writer = csv.writer(f, delimiter=',')
-            writer.writerow(['word', 'meaning'])
-            for word, meaning in data:
-                writer.writerow([word, meaning])
-        return True
-
-class jsonHandler(StringToList):
-    def load(self, path, encoding) -> list:
-        voca = []
-        with open(path, 'r', encoding=encoding) as f:
-            data = json.load(f)
-            for item in data:  # 예: [{ "word": "apple", "meaning": "과일" }, ...]
-                word = item.get("word", "").strip()
-                meanings = re.split(r'[;,]', item.get("meaning", "").strip())
-                for mean in meanings:
-                    mean = mean.strip()
-                    if mean:
-                        voca.append((word, mean))
-        return voca
-    
-    def dump(self, path, data, encoding) -> bool:
-        with open(path, 'w', encoding=encoding) as f:
-            temp = []
-            for word, meaning in data:
-                if isinstance(meaning, list|tuple):
-                    meaning = ','.join(meaning)
-                temp.append({'word':word, 'meaning':meaning})
-            json.dump(temp, f, ensure_ascii=False, indent=2)
-        return True
-
-class xmlHandler(StringToList):
-    def load(self, path, encoding) -> list:
-        tree = ET.parse(path)
-        root = tree.getroot()
-        rows = root.findall("row")
-        voca = []
-        for row in rows:
-            word = row.get('word')
-            meaning = row.get('meaning')
-            voca.append((word, meaning))
-        return voca
-    
-    def dump(self, path, data, encoding) -> bool:
-        root = ET.Element('data')
-        for word, meaning in data:
-            row = ET.SubElement(root, 'row')
-            row.set("word", word)
-            row.set("meaning", meaning if isinstance(meaning, str) else ','.join(meaning))
-
-        tree = ET.ElementTree(root)
-        tree.write(path, encoding=encoding, xml_declaration=True)
-        return True
-
-class TextFileProcessor:
     @staticmethod
-    def _get_handler(path:str) -> StringToList:
-        if path.endswith(".txt"):
-            return txtHandler()
-        elif path.endswith(".csv"):
-            return csvHandler()
-        elif path.endswith(".json"):
-            return jsonHandler()
-        elif path.endswith(".xml"):
-            return xmlHandler()
-        else:
-            raise ValueError("지원하지 않는 파일 형식 입니다.")
+    def _get_handler(path:str) -> _text_handler:
+        _, extension = os.path.splitext(path)
+        try:
+            return FileProcessor._HANDELERS[extension]()
+        except:
+            raise ValueError(f"지원하지 않는 파일 형식 입니다: {extension} ")
         
-    @staticmethod
-    def load(path, encoding='utf-8') -> list:
-        handler = TextFileProcessor._get_handler(path)
-        return handler.load(path, encoding)
-    
     @staticmethod
     def _PreProcess(data:list|tuple) -> list|tuple:
         """
@@ -166,6 +58,11 @@ class TextFileProcessor:
         
         else:
             raise TypeError("Data의 형식이 수상합니다")
+        
+    @staticmethod
+    def load(path, encoding='utf-8') -> list:
+        handler = FileProcessor._get_handler(path)
+        return handler.load(path, encoding)
     
     @staticmethod
     def dump(path:str, data:list|tuple, encoding='utf-8') -> bool:
@@ -174,6 +71,6 @@ class TextFileProcessor:
         2차원 형식의 배열이어야 합니다.
         return [(word, meaning), (word, meaning), ...]
         """
-        handler = TextFileProcessor._get_handler(path)
-        data = TextFileProcessor._PreProcess(data)
+        handler = FileProcessor._get_handler(path)
+        data = FileProcessor._PreProcess(data)
         return handler.dump(path, data, encoding)
