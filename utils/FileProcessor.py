@@ -144,7 +144,7 @@ class TextFileProcessor:
         return handler.load(path, encoding)
     
     @staticmethod
-    def _PreProcess(data) -> list|tuple:
+    def _PreProcess(data:list|tuple) -> list|tuple:
         """
         서브 클래스에 일관된 데이터를 전송해줍니다. 이를 통해 코드를 좀 더 쉽게 유지보수 할 수 있습니다!
         만약, 다양한 형식을 추가하고 싶다면 새로운 유틸 클래스를 만드는 것을 추천합니다.
@@ -168,7 +168,7 @@ class TextFileProcessor:
             raise TypeError("Data의 형식이 수상합니다")
     
     @staticmethod
-    def dump(path, data, encoding='utf-8') -> bool:
+    def dump(path:str, data:list|tuple, encoding='utf-8') -> bool:
         """
         Data 는 반드시 1개의 단어와 1개의 뜻으로 쌍을 이룬
         2차원 형식의 배열이어야 합니다.
