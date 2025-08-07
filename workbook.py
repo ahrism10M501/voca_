@@ -212,7 +212,7 @@ class TextTemplate(VocaTemplate):
     def make(self, voca):
         data = VocaTemplate._preprocess(voca)
         data = self.blanker(data)
-        return Workbook(data)
+        return TextWorkbook(data)
 
 class ImageTemplate(VocaTemplate):
     def __init__(self, path, type):
@@ -229,40 +229,87 @@ class ImageTemplate(VocaTemplate):
         writer_data["image"] = Image.open(self.path) # 미구현
         writer_data["pos"] = open(self.path).read()
         writer_data["voca"] = data
+        return TextWorkbook(writer_data)
+
+class PDFTemplate(VocaTemplate):
+    def __init__(self, path, type):
+        super().__init__(type)
+        self.path = path
+
+    def make(self, voca):
+        data = VocaTemplate._preprocess(voca)
+        data = self.blanker(data)
+        writer_data = {}
+        writer_data["path"] = self.path
+        # 이미지 마다 어떤 위치에 어떤 식으로 글자를 쓸 것인지 미리 지정해주어야 한다.
+        # 이를 어떻게 저장하고 있을 것이며, 어떻게 처리할 것인가?
+        writer_data["image"] = Image.open(self.path) # 미구현
+        writer_data["pos"] = open(self.path).read()
+        writer_data["voca"] = data
         return Workbook(writer_data)
+
+# template를 생성함에 있어서 builder 패턴을 사용하는 것이 어떨까.
+# Text는 달리 많은 설정이 필요하지 않지만, Image의 경우 자간, 글자 크기, 배경화면, 제목, 스타일 등 설정할 내용이 많다.
+# PDF의 경우도 마찬가지이며, 문제지의 크기 포맷도 문제가 있다.
 
 from utils.FileProcessor import TextFileProcessor
 
-class FileWriter(abc.ABC):
-    @abc.abstractmethod
-    def write(self, data): pass
+# class FileWriter(abc.ABC):
+#     @abc.abstractmethod
+#     def write(self, data): pass
     
-class ImageWriter(FileWriter):
-    def __init__(self, save_path):
-        self._save_path = save_path
+# class ImageWriter(FileWriter):
+#     def __init__(self, save_path):
+#         self._save_path = save_path
 
-    def write(self, data):
-        pass
+#     def write(self, data):
+#         ImageFileProcessor.dump(self._save_path, data)
 
-class TextWriter(FileWriter):
-    def __init__(self, save_path):
-        self._save_path = save_path
-    def write(self, data):
-        TextFileProcessor.dump(self._save_path, data)
+# class TextWriter(FileWriter):
+#     def __init__(self, save_path):
+#         self._save_path = save_path
+#     def write(self, data):
+#         TextFileProcessor.dump(self._save_path, data)
 
-class Workbook:
+class Workbook(abc.ABC):
+    @abc.abstractmethod
+    def load(self, path) -> list: pass
+    
+    @abc.abstractmethod
+    def save(self, path) -> bool: pass
+        
+    
+class TextWorkbook(Workbook):
     def __init__(self, data):
         self.data = data
 
-    def load(self):
-        pass
+    def load(self, path):
+        return TextFileProcessor.load(path)
 
-    def save(self, writer:FileWriter):
-        return writer.write(self.data)
-    
+    def save(self, path):
+        return TextFileProcessor.dump(path, self.data)
+
+# Workbook의 경우 data도 포함하는 객체이고
+# TextFileProcessor는 텍스트 파일을 읽고 쓰는 역할을 한다. -> 읽기 역할과 쓰기 역할을 나눠?
+
 # 패턴 수준... 복잡시러워!!! 
 # 구조 다시 짜야 할 듯. 특히 Image, Text 나누는 것부터 잘못됨.
 
+
+
+"""
+목표 클라이언트 코드
+
+from utils.DB.DB_utils import *
+
+sqlite = SqliteDB("VOCA.DB")
+with DBOpen(sqlite) as db:
+    data = db.load()
+
+templ = TextTemplate("both")
+workbook = workbook(templ, data)
+workbook.save("workbook_ex.csv")
+"""
 if __name__ == "__main__":
     from utils.DB.DB_utils import *
 
@@ -273,5 +320,5 @@ if __name__ == "__main__":
     templ = TextTemplate("both")
     workbook = templ.make(data[:20])
 
-    workbook.save(TextWriter("workbook_ex.csv"))
+    workbook.save("workbook_ex.csv")
     
